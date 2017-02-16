@@ -54,7 +54,7 @@ class mailchimp_campaign_archive {
 
 		$retval = $api->get('campaigns', $filters );
 
-		if ($api->getLastError){
+		if ($api->getLastError()){
 			// Output an HTML comment if an error occurs
 			$html .= '<!-- ';
 			$html .= "Unable to retrieve list of campaigns";
@@ -111,7 +111,7 @@ class mailchimp_campaign_archive {
 			    $html .= '<ul class="mailchimp-campaigns" class="'. $params['organize_by'] .'">';
 			    foreach($campaigns as $c){
 			    // Iterate over each email campaign in the list
-			    	$link_text = esc_html( $c[$params['link_text']] );
+			    	//$link_text = esc_html( $c[$params['link_text']] );
 			        $html .= '<li class="' . $c['status'] . '">';
 			        $html .= '<a rel="external" target="_blank" href="'. $c['archive_url'] .'">' . $c['settings']['subject_line'] . '</a>';
 			        $html .= '</li>';
