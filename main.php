@@ -49,6 +49,8 @@ class mailchimp_campaign_archive {
 			'fields' => 'campaigns.archive_url,campaigns.settings.subject_line,campaigns.create_time,campgains.send_time,campaigns.status',
 			'count' => 1000,
 			'offset' => 0,
+			'sort_field' => 'send_time',
+                        'sort_dir' => $params['order'],
 			'folder_id' => $params['folder_id'],
 		);
 
