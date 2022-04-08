@@ -3,15 +3,11 @@
 Plugin Name: MailChimp Campaign Archive
 Plugin URI: http://JoeAnzalone.com/plugins/mailchimp-campaign-archive/
 Description: Adds a [mailchimp_campaigns] shortcode that lists your latest MailChimp email campaigns
-Version: 1.0.4
-Author: Joe Anzalone, Leon Hedding
+Version: 1.0.3
+Author: Joe Anzalone
 Author URI: http://JoeAnzalone.com
 License: GPL2
 */
-
-// Require MailChimp's official API wrapper
-require_once 'src/MailChimp.php';
-use \DrewM\MailChimp\MailChimp;
 
 class mailchimp_campaign_archive {
 
@@ -24,9 +20,11 @@ class mailchimp_campaign_archive {
 			'order' => 'DESC',
 			'link_text' => 'subject',
 			'status' => 'sent',
+			'from_name' => null,
+			'from_email' => null,
 			'list_id' => null,
 			'folder_id' => null,
-			'since_send_time' => null,
+			'sendtime_start' => null,
 			'organize_by' => null,
 			'heading_tag' => 'h2',
 		);
@@ -40,31 +38,33 @@ class mailchimp_campaign_archive {
 			}
 		}
 
-		$api = new MailChimp( $params['apikey'] );
+		// Require MailChimp's official API wrapper
+		require_once 'src/Mailchimp.php';
+
+		$api = new Mailchimp( $params['apikey'] );
 
 		$filters = array(
 			'status' => $params['status'],
+			'from_name' =>  $params['from_name'],
+			'from_email' => $params['from_email'],
 			'list_id' => $params['list_id'],
-			'since_send_time' => $params['since_send_time'],
-			'fields' => 'campaigns.archive_url,campaigns.settings.subject_line,campaigns.create_time,campgains.send_time,campaigns.status',
-			'count' => 1000,
-			'offset' => 0,
-			'sort_field' => 'send_time',
-                        'sort_dir' => $params['order'],
 			'folder_id' => $params['folder_id'],
+			'sendtime_start' => $params['sendtime_start'],
 		);
 
-		$retval = $api->get('campaigns', $filters );
+		// http://apidocs.mailchimp.com/api/1.3/campaigns.func.php
+		$retval = $api->campaigns->getList( $filters, 0, 1000 );
 
-		if ($api->getLastError()){
+		if (isset($api->errorCode)){
 			// Output an HTML comment if an error occurs
 			$html .= '<!-- ';
 			$html .= "Unable to retrieve list of campaigns";
-			$html .= "\n\tCode=".$api->getLastError;
+			$html .= "\n\tCode=".$api->errorCode;
+			$html .= "\n\tMsg=".$api->errorMessage."\n";
 			$html .= ' -->';
 			return $html;
 		} else {
-			$campaigns = $retval['campaigns'];
+			$campaigns = $retval['data'];
 
 			if ( strcasecmp( $params['order'], 'DESC' ) ) {
 				$campaigns = array_reverse( $campaigns );
@@ -113,9 +113,10 @@ class mailchimp_campaign_archive {
 			    $html .= '<ul class="mailchimp-campaigns" class="'. $params['organize_by'] .'">';
 			    foreach($campaigns as $c){
 			    // Iterate over each email campaign in the list
-			    	//$link_text = esc_html( $c[$params['link_text']] );
+
+			    	$link_text = esc_html( $c[$params['link_text']] );
 			        $html .= '<li class="' . $c['status'] . '">';
-			        $html .= '<a rel="external" target="_blank" href="'. $c['archive_url'] .'">' . $c['settings']['subject_line'] . '</a>';
+			        $html .= '<a rel="external" target="_blank" href="'. $c['archive_url'] .'">' . $link_text . '</a>';
 			        $html .= '</li>';
 
 			    }
